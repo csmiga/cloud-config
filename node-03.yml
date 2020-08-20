@@ -1,0 +1,179 @@
+#cloud-config
+
+hostname: node-03
+
+rancher:
+  debug: false
+  console: debian
+  docker:
+    engine: docker-18.06.3-ce
+    tls : true
+    tls_args:
+      - --tlsverify
+      - --tlscacert=/etc/docker/tls/ca.pem
+      - --tlscert=/etc/docker/tls/server-cert.pem
+      - --tlskey=/etc/docker/tls/server-key.pem
+      - -H=0.0.0.0:2376
+    storage_driver: overlay
+  network:
+    interfaces:
+      eth0:
+        dhcp: true
+      eth1:
+        address: 192.168.56.23/24
+        mtu: 1500
+        dhcp: false
+      lo:
+        address: 127.0.0.1/8
+    dns:
+      override: true
+      search:
+        - smiga.net
+        - smiga.com
+      nameservers:
+        - 156.154.71.1
+        - 156.154.70.1
+  # NOTE - All "services" use the docker-compose format for user space images
+  #services:
+  #  portainer:
+  #    image: portainer/portainer
+  #    command: -H unix:///var/run/docker.sock
+  #    volumes:
+  #      - /var/run/docker.sock:/var/run/docker.sock
+  #      - portainer_data:/data
+  #    restart: unless-stopped
+  #    ports:
+  #      - 9000:9000
+
+ssh_authorized_keys:
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDSFf/lVtvzvdGplvY6F/iq1Pv3EuYy12/srMqull1qRWTr1ah9AwCK5pVmEXkLBk3jFuY/y0hUfbzX5WWCPoOfskbUYCvxhwnOpzJCqkBGrih3G7uacN8GQmQrtrurwftHu5lQYvJcwEK0QxRwGslnGEbN36L58PrJD1VyLRqNw1Xp1DzKKokT29p31mf0xTiZGUCrGtGl9UMKd/kLoc2i088+q6yi3mLD8g4tBDiDX/JK/wOzbmmSTxIqgK4ATaMafZUfx8URhnd1qUD8sNTuFEYRIuyzq4Fpwz0C6/0mi9fHXIKpzJ6eb9Nc2a0XZR1zDaDHCz0w586WY3g+lPnr csmiga
+
+write_files:
+  - path: /etc/ntp.conf
+    permissions: "0644"
+    owner: root
+    content: |
+      server 0.pool.ntp.org iburst
+      server 1.pool.ntp.org iburst
+      server 2.pool.ntp.org iburst
+      server 3.pool.ntp.org iburst
+      # Allow only time queries, at a limited rate, sending KoD when in excess.
+      # Allow all local queries (IPv4, IPv6)
+      restrict default nomodify nopeer noquery limited kod
+      restrict 127.0.0.1
+      restrict [::1]
+  - path: /etc/docker/tls/ca-key.pem
+    permissions: "0600"
+    owner: root
+    content: |
+      -----BEGIN RSA PRIVATE KEY-----
+      MIIEpAIBAAKCAQEA2UYIllSLTY6HfpSm/ZJdh4WGGb0NMn6c8RGrXmlUNoU8monB
+      ZTAkPjRtxICWA47E8R1RLA2iZEdOPB1+WrZ49Bwnu77JBXvu75bO3+FKZaX4GCFa
+      7l+x9kovFUyMqXlfrs1ROB+wFnAoGpl3V2Szvb+shICxR5s1vR+vvkvDvaTYJHlG
+      zrH9XBA+bWqlrb+YfzMR0pdwwNECddLUD+I1pvrMfjPWHVondcHFap/aFMza1FqJ
+      08JVeuvvhDUBHDrY65F2Z9FpEifhYMrYHh2k6E9t0G05KM4VqEQqPRVsOJej4WSn
+      XhIKn7LQSAVtMpuNCcSbMZW2Cob2vVjImzaBbwIDAQABAoIBAHRsN3u+L6rOPcJR
+      Cy4CuMU+gf3WtHSjLZtrOWVskShpunCgchWzdygx1cOel0Ouw87jQ7SUVbjgEIbb
+      0vHupt8/GvdaIsMihoSxTYbfZIsVJNxhOyVR970eQR5rl0/UbrXu5J9rM2LClGq0
+      YyNcHYgGZf3WK6hP/bqqePRCCs/ZwEnQhqjkX5RnlnB3H2aSxjuTc8ftaMpvCjLQ
+      2K32L/AWazTe4wrXBeiZa3taNku3KreLv4lB+ZiC20ISK3o1l88Tr7Wx9MPcT33U
+      QWH74mH6EFHLZcJIO95vM6gbs76a92VJIP0hj/cvPixpcQpj5zRoAJroo7csqy9w
+      e41NhMkCgYEA2kYytzOYyYXwvmsgilCX9f0/AVhHd+1ImUyOglX3iA0kCQI4tgw4
+      mnC4GWYEyomVKdlKb1s0xyuhTbMH9O0Kr+7G4YWyFBG+AVKR+FCRD4G0LE2rd8Ff
+      mT+7/8RFU3kVwn6kDj2mB56KsjiUnREDaAnTVHppMmwracU7vzCY+hUCgYEA/tOP
+      kOaBTmyjAQSpcgV2kGs2DNKg2wxSkfTlUhtReVZnk15l1fAQQtGAwmoN7jUihKy4
+      2Yv/rF6rgm1ftz8qx68e9sMgy0CwLxPFifZgxpvXatw2pw2mJpJtMUsD13FY0tcs
+      /0kf8rLl3xA5N4DjdakTB0lfEovJkyK7khbiAnMCgYEAxAT8sKfGk1wU2nzMSUqd
+      XY0jUurbq+jNJNaquIPJe0YJ0YlMMrkA8DlAK5cBwH4UFfQMs7pdyGv3PRcFk0B5
+      M4wk0Q1G4l0YnIlxi2WXECz0CEFsNmzTlIW3KLczZwY7s2IVpLBadUc82VaUqAVK
+      YNlKDvirllusFR3KTSWwjA0CgYBGYb50YgXy2DSJUnVOhc3Cg6oRDpfZCGVB5Ob1
+      r4/oOIIxBNCRr1V+bwjmKY6hbVGUXXRMucsrG5a5VmYqYar6LhcaRrinCr3estJL
+      kZ4XHPH5lMsPhsiOPMEl7TcpaSgES+Qkuli1ms28t2lmOBYa6FDWIWC96ZgKKHyw
+      E9vmmwKBgQDAxOWaSfqzzFItnghck5VCU51kN41pLaQHqGWw3uCwrsysYbnnTnQr
+      2TfWnlNubLLqndfeT2nGRKZnkqKC90UMdi14MlC16sikQQB2DvglAJB6P11Y3xPP
+      PJxoIjFCx2TfzwpZaZdBAX9cML6rMjUaxrZwaUAwJfV2VQzwv0ab9w==
+      -----END RSA PRIVATE KEY-----
+  - path: /etc/docker/tls/ca.pem
+    permissions: "0644"
+    owner: root
+    content: |
+      -----BEGIN CERTIFICATE-----
+      MIIC0TCCAbmgAwIBAgIQYqyrUVIcnwmEPodGZMgJFjANBgkqhkiG9w0BAQsFADAS
+      MRAwDgYDVQQKEwdyYW5jaGVyMB4XDTE3MDgxNDAzNTUwMFoXDTIwMDcyOTAzNTUw
+      MFowEjEQMA4GA1UEChMHcmFuY2hlcjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCC
+      AQoCggEBANlGCJZUi02Oh36Upv2SXYeFhhm9DTJ+nPERq15pVDaFPJqJwWUwJD40
+      bcSAlgOOxPEdUSwNomRHTjwdflq2ePQcJ7u+yQV77u+Wzt/hSmWl+BghWu5fsfZK
+      LxVMjKl5X67NUTgfsBZwKBqZd1dks72/rISAsUebNb0fr75Lw72k2CR5Rs6x/VwQ
+      Pm1qpa2/mH8zEdKXcMDRAnXS1A/iNab6zH4z1h1aJ3XBxWqf2hTM2tRaidPCVXrr
+      74Q1ARw62OuRdmfRaRIn4WDK2B4dpOhPbdBtOSjOFahEKj0VbDiXo+Fkp14SCp+y
+      0EgFbTKbjQnEmzGVtgqG9r1YyJs2gW8CAwEAAaMjMCEwDgYDVR0PAQH/BAQDAgKs
+      MA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBADomWa6SlYp01OTf
+      QyDBGWVNr3kW2HsRxO0rqghpd+wev/owKMDFWjHt4npGYosy/GcaB4V8EFtqLh07
+      hBUcousn6ndWkPziOIvPz7/PEsJ0skQWiDwe9R9Pha4sDxk7oKJhcl1c5xMp+SIz
+      IB8SyHhH6RPJgJVRndBWpmdFl1QPgAurn+0QHY9AjDsp8EA6jM44GfAMpGzV9/QQ
+      /6bbLIej6RgMs5ENynNhNV5tgfx+IndAwSBsS5Uw7D1NSFfmB/z3UcOnvE4eHxhE
+      i7cm2IhLT4iu5FTmQr0yGn59z5MalNwQr/42cDQeZ0HlpuZIC90DHz2Cfktu22hj
+      10k9u/Y=
+      -----END CERTIFICATE-----
+  - path: /etc/docker/tls/server-key.pem
+    permissions: "0600"
+    owner: root
+    content: |
+      -----BEGIN RSA PRIVATE KEY-----
+      MIIEogIBAAKCAQEA6NYz80rntJgGZLv01X8CChot7u4E/hoyApzwxyfPLCxh7j/b
+      WgQaJQs3YhIn9ngOYZmtS2BQfZbAMmaA7sb+JtcEFcENYXCMUCaBwEE+tvMEtBLu
+      a8j3oXyj30P5LQS0ZS93CUbUOPDG6kEaaaEFKXhcwra8QJJJiYhV1PF2RjNXTJwH
+      5g6i8WYwbEDFzQ86QoK880pDzY6HSfJM4ZbKNuXRMjIiFyc/bNhX8Kq5Kq99szj0
+      3e0jwVXtsiB5myvRIhl4VzVVhOx/ZhMQ2TV8syFB3l6k5RjbtrQovsGjWOaPKCOb
+      BAPxLM0z6bIuVC7rqgJ+A5HcJFa6vybYEMK2RQIDAQABAoIBAAQiqdGMZwkiGhr3
+      66VPGC4twNsZhyUsOe8p8mzXHCrgruyYXcD/iadWx6kKQYNzJm49WIKaN1PDta4v
+      e+LBzgnKj9wDDcXJRfS2el97yS1eq5q3K1zmuN85Y3+3qVlPWBTj/u0/QM2yGRZY
+      CawOnBTcemlK7ZUIBB5ZOY0KrNsaTalBdWYwuRU6DubL+aBA7AvBTML3o6rDx//E
+      /aXvdZX7RWJlGqwxAu0z0oJdtBhQ7cuAYjqhiMNTNSsnJR//c4rLQ/BJvoRF/wbf
+      dyhoRc4AgrV2SVCRY9t0ATdEycJ2dh/RtwZQf34GG8TzryJeIE9tNs9Op7Mw2YsT
+      oL4g4BECgYEA7EHy1TtACPxCKU0Desb+sqh4KOrjqKfWuAidg9lwAAISOwjFNBSQ
+      HfcnBmOjehhZHZfNDdlj3ROxCaP+HmF89A5KDSL8Jp0TSVi6oGxqLQXhtYF2i94L
+      z+m15K7BeerwdoUtUg4wXkUDoYMYcqkxDy1PJx37FJ7JOzkCyAJXJIMCgYEA/EsT
+      D44waSTVtD1lqt0JbQ+g5cnaJn6xCyzhOsCmdI5euPwDIL/M/OdzzRxgb+Rd1CLc
+      IGqi6+CssyaykfTwEHzCgGplbq6NtWvOwWM+EZiBXxAm08f+4II/N+f45dr/pOQY
+      2TqMzGmieDc3L1cj+u+b+YgEFWlH1qII1Lp9j5cCgYB68Xakb8jK5Dqps2H0Kkmw
+      PusIn/MIeQ7LhfAyBJy75FgIUHAOwgSdE1hDguY3SyRUugIDCvVkvjKKicRbmu+j
+      MSxn2aTNkz/OE1ZK1SALfdwOz+gYsNwEveHhtu8HurKXeoYzBR82b0OMcOPwBwt4
+      kmN2P6vA90BQiUJhQpaGcQKBgFuGZLjM7XUHXtuPNnXA0C2XcNhL3O8AIPwb4O1u
+      fDRmfaiADCZyTkwlLxZmx/lvkDZoGxFLfiUyEZTAYiGfCQQCLpFlh7yaaGA7Zvsz
+      JI4/lBdHhb5onGcX+RUv+1RvmTRZZ0ZO/ksdu0n/Re7Pnwbmq9/fXxPhaKVNjQSX
+      TvurAoGAFA+di67H/N5vjM1GVmMnxSqTofNocqgUVymkZbDUUw/bcKnj7MEu43j7
+      xHFAkxDheTAosSOcarLXV/57owSfIt2DYVyV2qeEuU7OVgeVs9f5t51It/oJ2KKd
+      hWAlNrW0jFwl9mYym6QRiVezELIRoEmXhIJvAd96FIkGolBV23M=
+      -----END RSA PRIVATE KEY-----
+  - path: /etc/docker/tls/server-cert.pem
+    permissions: "0644"
+    owner: root
+    content: |
+      -----BEGIN CERTIFICATE-----
+      MIIDDzCCAfegAwIBAgIRAK7aIFWeKrZd+N/LcZ0oOyAwDQYJKoZIhvcNAQELBQAw
+      EjEQMA4GA1UEChMHcmFuY2hlcjAeFw0xNzA4MTQwMzU1MDBaFw0yMDA3MjkwMzU1
+      MDBaMBIxEDAOBgNVBAoTB3JhbmNoZXIwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAw
+      ggEKAoIBAQDo1jPzSue0mAZku/TVfwIKGi3u7gT+GjICnPDHJ88sLGHuP9taBBol
+      CzdiEif2eA5hma1LYFB9lsAyZoDuxv4m1wQVwQ1hcIxQJoHAQT628wS0Eu5ryPeh
+      fKPfQ/ktBLRlL3cJRtQ48MbqQRppoQUpeFzCtrxAkkmJiFXU8XZGM1dMnAfmDqLx
+      ZjBsQMXNDzpCgrzzSkPNjodJ8kzhlso25dEyMiIXJz9s2Ffwqrkqr32zOPTd7SPB
+      Ve2yIHmbK9EiGXhXNVWE7H9mExDZNXyzIUHeXqTlGNu2tCi+waNY5o8oI5sEA/Es
+      zTPpsi5ULuuqAn4DkdwkVrq/JtgQwrZFAgMBAAGjYDBeMA4GA1UdDwEB/wQEAwID
+      qDAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwEwDAYDVR0TAQH/BAIwADAf
+      BgNVHREEGDAWgglsb2NhbGhvc3SCCWxvY2FsaG9zdDANBgkqhkiG9w0BAQsFAAOC
+      AQEAgqT21wzcv1fhXFgQeCNoknTWABnaQoHkqEicgrTgqZMQ0aR59zFQeKMLAoGZ
+      uZga9gmkNQwlb/5xgWACYo2VxP1Vb0zX9betHuowGDogOOAtjkPeGg+uuk+dymZ1
+      l83PGHa3v/3LBL4DLiob5uGlEw5ax2OK8mW6rptrKnXUs7/HZHpm6xZ3ZUiFUYT0
+      f0gDUGVRNprooBOwrJTIzMqn3KRn8TysSvP7mJRDa7MxBwYAK07H1hVZuATpTR/Y
+      vFihAy7UUoElFRT21JLM8kRhBkX5cNkcO6ff7mLlRUupd5ri1yMsfNLHXsc+9QZm
+      q+SIvoz7McQWaW0DFMXaWG564g==
+      -----END CERTIFICATE-----
+
+runcmd:
+  - apt-get --yes update --fix-missing
+  - apt-get --yes upgrade --no-install-recommends
+  - apt-get install --yes --no-install-recommends git
+  - apt-get --yes purge          
+  - apt-get --yes autoremove     
+  - apt-get --yes clean
